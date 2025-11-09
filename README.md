@@ -1,364 +1,149 @@
-# BMAD Orchestrating - Autonomous Development Automation
+# BMAD Orchestrating
 
-This repository contains two orchestrator prompts that enable fully autonomous, human-out-of-the-loop software development using the BMAD (Building with Modern AI Development) methodology with Claude Code.
+Autonomous software development using Claude Code. No humans in the loop.
 
-## Overview
+## What This Does
 
-BMAD orchestrating automates the core Scrum Master -> Dev -> QA cycle, allowing Claude to autonomously:
-1. Draft detailed user stories (via Scrum Master agent)
-2. Implement the stories (via Dev agent)
-3. Review and validate implementations (via QA agent)
-4. Iterate on feedback until stories are complete
-5. Continue to the next story without human intervention
+Automates the **Scrum Master -> Dev -> QA** cycle until your entire epic is complete. Claude continuously:
+1. Drafts stories (SM agent)
+2. Implements code (Dev agent)
+3. Reviews implementation (QA agent)
+4. Fixes issues and repeats until "Done"
+5. Moves to next story automatically
 
-The orchestrators take humans out of the development loop, continuously cycling through stories until entire epics are complete.
+**You only get interrupted when the entire epic is finished or there's a critical blocker.**
 
-## Repository Structure
+## Files
 
 ```
-.
-├── orchestrator.md                    # Sequential epic-per-epic orchestrator
-├── orchestrator-parallelized.md       # Parallelized multi-workstream orchestrator
-├── .claude/
-│   └── agents/                        # Agent configurations for Claude Code
-│       ├── sm-scrum.md               # Scrum Master agent
-│       ├── dev.md                    # Developer agent
-│       └── qa-quality.md             # QA agent
-└── .bmad-core/                        # Full BMAD framework (agents, tasks, checklists)
+orchestrator.md                   # Sequential: one epic, one story at a time
+orchestrator-parallelized.md      # Parallel: multiple epics/stories simultaneously
+.claude/agents/                   # SM, Dev, QA agent configs
+.bmad-core/                       # Full BMAD framework
 ```
 
-## The Two Orchestrators
+## Quick Start
 
-### 1. Sequential Orchestrator (`orchestrator.md`)
+### 1. Choose Your Mode
 
-**Use for**: Single epic, linear development workflows
+**Sequential** - Linear, one epic:
+- Copy `orchestrator.md`
+- Paste into Claude Code
+- Watch it cycle through stories until epic complete
 
-**Workflow**:
+**Parallelized** - Multiple epics, max throughput:
+- Requires `docs/parallelization-analysis.md` in your project
+- Copy `orchestrator-parallelized.md`
+- Paste into Claude Code
+- Watch it work multiple stories across workstreams simultaneously
+
+### 2. Your Project Needs
+
 ```
-CONTINUOUS LOOP (until epic complete):
-1. @sm-scrum creates/finalizes story -> marks "Ready for Development"
-2. @dev implements story -> marks "Ready for Review"
-3. @qa-quality reviews -> marks "Done" OR "In Progress" (with feedback)
-4. If "In Progress": @dev fixes issues -> marks "Ready for Review" -> back to step 3
-5. If "Done": Immediately proceed to next story (auto-continue)
-6. Repeat until ALL stories in epic are "Done"
-```
-
-**Key Features**:
-- Works through one epic at a time, story by story
-- Strict status gate enforcement (stories cannot advance without proper status updates)
-- Maintains `docs/orchestration-flow.md` for full audit trail
-- Only interrupts human when epic is complete or critical blocker occurs
-- Auto-continues to next story after each completion
-
-**Status Flow**:
-```
-Draft -> Ready for Development -> Ready for Review -> Done
-                                     |
-                                In Progress (if QA finds issues)
-                                     |
-                             Ready for Review (after fixes)
+your-project/
+├── docs/
+│   ├── project-overview.md           # Project context
+│   ├── orchestration-flow.md         # Auto-generated logs
+│   └── parallelization-analysis.md   # For parallel mode only
+├── stories/                          # Story files
+└── .claude/agents/                   # Copy from this repo
 ```
 
-### 2. Parallelized Orchestrator (`orchestrator-parallelized.md`)
+## How It Works
 
-**Use for**: Multi-epic projects with independent workstreams that can be developed in parallel
+### Status Gates (Enforced)
 
-**Workflow**:
 ```
-CONTINUOUS PARALLEL LOOP (until ALL epics complete):
-1. Scan ALL workstreams for available work
-2. Identify stories that can progress NOW (check dependencies)
-3. Execute multiple agents on independent stories simultaneously
-4. Verify all status changes
-5. Continue until EVERY story in EVERY epic is "Done"
+Draft
+  -> SM finalizes -> Ready for Development
+  -> Dev implements -> Ready for Review
+  -> QA reviews -> Done ✓ OR In Progress (needs fixes)
+  -> (If fixes needed) Dev fixes -> Ready for Review
+  -> QA re-reviews -> Done ✓
 ```
 
-**Key Features**:
-- Executes multiple stories across different epics simultaneously
-- Reads `docs/parallelization-analysis.md` to understand dependencies
-- Respects workstream dependencies (sequences dependent work, parallelizes independent work)
-- Context compaction when needed (logs compaction events)
-- Only stops when ALL epics across ALL workstreams are 100% complete
-- Maximizes throughput via parallel execution
+**Breaking Mode**: Agents MUST update status or the cycle fails. This ensures quality and progress visibility.
 
-**Requires**:
-- `docs/parallelization-analysis.md` - Documents which epics/stories can run in parallel
-- Clear workstream structure (e.g., Epic 1.x = Infrastructure, 2.x = Domain, 3.x = API)
+### The Loop
 
-**Example Parallel Execution**:
 ```
-Batch 1: @dev on story 1.4 + @dev on story 2.1 + @qa-quality on story 3.1
-Batch 2: @qa-quality on 1.4 + @sm-scrum create 2.3 + @dev on 3.1
-Continue until all workstreams complete...
+┌─ START ─────────────────────────────────┐
+│                                          │
+│  SM creates story -> "Ready for Dev"    │
+│  Dev implements -> "Ready for Review"   │
+│  QA reviews -> "Done" or "In Progress"  │
+│                                          │
+│  If "In Progress":                      │
+│    Dev fixes -> QA re-reviews           │
+│                                          │
+│  If "Done":                             │
+│    IMMEDIATELY next story (no pause)    │
+│                                          │
+└─ REPEAT UNTIL EPIC COMPLETE ────────────┘
 ```
+
+### Parallel Mode Difference
+
+Works on **multiple stories across multiple epics** simultaneously:
+
+```
+Batch 1: Dev on 1.4 + Dev on 2.1 + QA on 3.1 (all independent)
+Batch 2: QA on 1.4 + SM creates 2.3 + Dev on 3.1
+...continues until ALL epics 100% done
+```
+
+Reads `parallelization-analysis.md` to know dependencies. Sequences dependent work, parallelizes independent work.
 
 ## The Three Agents
 
-### Scrum Master Agent (`@sm-scrum`)
-- **Role**: Story creation and refinement specialist
-- **Responsibilities**:
-  - Creates detailed, actionable stories from epics
-  - Ensures stories contain all information needed for implementation
-  - Pulls context from PRD and Architecture documents
-  - MUST mark stories "Ready for Development" when complete
-- **Key Command**: `*draft` - Execute create-next-story task
-- **Critical Rule**: NOT allowed to implement code or modify source files
+**@sm-scrum** - Creates detailed stories from epics. Loads PRD/Architecture context. MUST mark "Ready for Development".
 
-### Developer Agent (`@dev`)
-- **Role**: Expert full-stack implementation specialist
-- **Responsibilities**:
-  - Implements stories following requirements exactly
-  - Executes all tasks and subtasks in order
-  - Writes comprehensive tests
-  - Validates all tests pass before marking complete
-  - Updates story file sections (checkboxes, File List, Change Log, Debug Log)
-  - MUST mark "Ready for Review" when implementation complete
-- **Key Command**: `*develop-story` - Execute full development workflow
-- **Critical Rules**:
-  - Story contains ALL needed info (doesn't load PRD/architecture unless directed)
-  - ONLY updates specific story sections (Tasks checkboxes, Dev Agent Record, File List, Change Log, Status)
-  - Blocks for: unapproved dependencies, ambiguity, repeated failures, missing config
+**@dev** - Implements stories, writes tests, validates everything passes. MUST mark "Ready for Review".
 
-### QA Agent (`@qa-quality`)
-- **Role**: Test architect and quality advisor
-- **Responsibilities**:
-  - Comprehensive quality review against acceptance criteria
-  - Risk-based testing assessment
-  - Requirements traceability (maps stories to tests)
-  - Validates NFRs (security, performance, reliability)
-  - Creates quality gate decision (PASS/CONCERNS/FAIL/WAIVED)
-  - MUST mark "Done" (approved) OR "In Progress" (needs fixes)
-- **Key Command**: `*review {story}` - Execute comprehensive review
-- **Critical Rule**: ONLY updates "QA Results" section of story files
+**@qa-quality** - Reviews against acceptance criteria, creates quality gate (PASS/CONCERNS/FAIL/WAIVED). MUST mark "Done" or "In Progress".
 
-## Status Gate System
+## When Does It Stop?
 
-The orchestrators enforce strict status gates to ensure quality and progress visibility:
+**Auto-continues through**:
+- QA feedback cycles
+- Story completions
+- Normal development work
 
-| Status | Meaning | Next Agent | Required Update |
-|--------|---------|-----------|-----------------|
-| Draft | Story being created | @sm-scrum | -> "Ready for Development" |
-| Ready for Development | Story ready to implement | @dev | -> "Ready for Review" |
-| Ready for Review | Implementation complete | @qa-quality | -> "Done" or "In Progress" |
-| In Progress | QA found issues | @dev | -> "Ready for Review" |
-| Done | Story complete and approved | N/A | Epic tracking |
-
-**Breaking Mode**: Agents will fail if they don't update status. The orchestrator verifies status changes after EVERY agent invocation.
-
-## Required File Structure
-
-Both orchestrators expect this structure in your project:
-
-```
-project/
-├── docs/
-│   ├── project-overview.md           # Orchestrator reads this at init
-│   ├── orchestration-flow.md         # Orchestrator writes logs here
-│   ├── parallelization-analysis.md   # Required for parallelized mode
-│   ├── prd/                          # Product requirements (agents read)
-│   └── architecture/                 # Architecture docs (agents read)
-├── stories/
-│   ├── 1.1.story-name.md            # Story files with status
-│   ├── 1.2.another-story.md
-│   └── ...
-└── .claude/
-    └── agents/                       # Agent configs (from this repo)
-        ├── sm-scrum.md
-        ├── dev.md
-        └── qa-quality.md
-```
-
-## Usage
-
-### Setup
-
-1. Copy the orchestrator prompt you want to use:
-   - `orchestrator.md` for sequential development
-   - `orchestrator-parallelized.md` for parallel development
-
-2. Copy `.claude/agents/` directory to your project
-
-3. Ensure your project has the required file structure:
-   - `docs/project-overview.md` - Project context
-   - `stories/` directory - For story files
-   - For parallelized: `docs/parallelization-analysis.md` - Workstream dependencies
-
-### Activation
-
-**Sequential Mode**:
-```
-Paste orchestrator.md contents into Claude Code
-
-Claude will:
-1. Read docs/project-overview.md
-2. Scan stories/ directory
-3. Initialize docs/orchestration-flow.md
-4. Begin continuous orchestration
-5. Continue cycling until epic complete
-```
-
-**Parallelized Mode**:
-```
-Paste orchestrator-parallelized.md contents into Claude Code
-
-Claude will:
-1. Read docs/project-overview.md
-2. Read docs/parallelization-analysis.md
-3. Scan ALL stories across ALL workstreams
-4. Initialize docs/orchestration-flow.md
-5. Begin parallel orchestration
-6. Continue until ALL epics 100% complete
-```
-
-### When to Interrupt Human
-
-Both orchestrators only interrupt for:
-- **Epic(s) Complete**: All stories marked "Done"
-- **Critical Blocker**: Missing docs, conflicting requirements, architectural decisions needed
-- **Agent Failure**: Status not updated after 2 attempts
-- **Excessive Iteration**: Story fails QA 3+ times
-
-They do NOT interrupt for:
-- Normal QA feedback cycles
-- Standard implementation work
-- Story completion (auto-continues)
-- Progress updates (logged instead)
-
-## The BMAD Method Core Cycle
-
-```
-┌─────────────────────────────────────────────────────┐
-│  Human defines Epic (high-level feature/goal)       │
-└────────────────┬────────────────────────────────────┘
-                 │
-                 ▼
-        ┌────────────────────┐
-        │   @sm-scrum        │  Creates detailed story
-        │   Creates Story    │  (All requirements, context, tasks)
-        └────────┬───────────┘
-                 │
-                 ▼ Status: "Ready for Development"
-        ┌────────────────────┐
-        │      @dev          │  Implements story
-        │  Implements Code   │  (Code, tests, validation)
-        └────────┬───────────┘
-                 │
-                 ▼ Status: "Ready for Review"
-        ┌────────────────────┐
-        │   @qa-quality      │  Reviews implementation
-        │   Reviews Code     │  (Quality gates, testing)
-        └────────┬───────────┘
-                 │
-         ┌───────┴───────┐
-         │               │
-         ▼               ▼
-    "Done" ✓      "In Progress" (has feedback)
-         │               │
-         │               ▼
-         │      ┌────────────────────┐
-         │      │      @dev          │  Fixes issues
-         │      │   Applies Fixes    │
-         │      └────────┬───────────┘
-         │               │
-         │               ▼ Status: "Ready for Review"
-         │      (Back to @qa-quality)
-         │
-         ▼
-    Next Story
-    (Auto-continue)
-         │
-         ▼
-  [Repeat until Epic Complete]
-         │
-         ▼
-  🎉 EPIC COMPLETE -> Interrupt Human
-```
-
-## Orchestration Flow Logging
-
-Both orchestrators maintain `docs/orchestration-flow.md` with timestamped entries:
-
-**Sequential Example**:
-```markdown
-### 2025-11-08 14:23:15 - @sm-scrum
-**Story**: 1.3.aws-service.md
-**Status**: Draft -> Ready for Development
-**Outcome**: Story finalized with 8 tasks
-
-### 2025-11-08 14:45:32 - @dev
-**Story**: 1.3.aws-service.md
-**Status**: Ready for Development -> Ready for Review
-**Outcome**: Implemented AWS service integration, all tests passing
-
-### 2025-11-08 15:10:47 - @qa-quality
-**Story**: 1.3.aws-service.md
-**Status**: Ready for Review -> In Progress
-**Issues**: Error handling incomplete for edge cases
-```
-
-**Parallelized Example**:
-```markdown
-### 2025-11-08 14:23:15 - PARALLEL BATCH 1
-**Workstreams**: A, B, C
-**@dev** story-1.4.md (A): Ready for Dev -> Ready for Review
-**@dev** story-2.1.md (B): Ready for Dev -> Ready for Review
-**@qa-quality** story-3.1.md (C): Ready for Review -> Done
-
-### 2025-11-08 14:50:22 - WORKSTREAM STATUS CHECK
-Epic 1 (A): 3 active, 8 done, 2 remaining
-Epic 2 (B): 5 active, 3 done, 4 remaining
-Epic 3 (C): 1 active, 0 done, 6 remaining
--> CONTINUE - 12 stories remain across epics
-```
-
-## Context Management
-
-### Sequential Mode
-- Minimal context overhead
-- Agents load their own detailed context from PRD/Architecture
-- Main thread only tracks status and coordinates
-- Story files contain all implementation details
-
-### Parallelized Mode
-- Auto-compacts context when it grows large
-- Summarizes completed stories (keeps status, drops details)
-- Maintains full detail for active stories
-- Logs compaction events to orchestration-flow.md
-- Ensures performance across long-running multi-epic projects
+**Only interrupts you for**:
+- Epic(s) complete (all stories "Done")
+- Critical blocker (missing docs, conflicting requirements)
+- Agent failure (can't update status after 2 tries)
+- Excessive iteration (story fails QA 3+ times)
 
 ## Benefits
 
-1. **Fully Autonomous**: Eliminates human bottleneck in the dev cycle
-2. **Quality Enforced**: Status gates ensure proper review and validation
-3. **Full Audit Trail**: Complete orchestration history in logs
-4. **Scalable**: Sequential for focus, parallelized for throughput
-5. **Continuous Delivery**: Auto-continues until epics complete
-6. **Risk-Aware**: QA agent provides comprehensive quality assessment
-7. **Context Efficient**: Agents load only what they need, when they need it
+- **Zero human bottleneck** - Cycles 24/7 until done
+- **Quality enforced** - Status gates prevent shortcuts
+- **Full audit trail** - Everything logged to `orchestration-flow.md`
+- **Scalable** - Sequential for focus, parallel for speed
+- **Context efficient** - Agents load only what they need
 
-## The .bmad-core Framework
+## What's in .bmad-core
 
-This repo includes the complete BMAD framework in `.bmad-core/`, which provides:
+Complete BMAD framework with 10 agents, 20+ tasks, checklists, knowledge base, and templates. Agents reference these as needed.
 
-- **10 Agent personas** (Architect, PM, PO, Analyst, UX, Scrum Master, Dev, QA, etc.)
-- **20+ Executable tasks** (create stories, review code, design tests, etc.)
-- **5 Quality checklists** (story drafts, definition of done, architecture, etc.)
-- **Knowledge base** (elicitation methods, testing frameworks, technical preferences)
-- **Templates** (PRD, stories, architecture docs, quality gates)
+## Example Session
 
-Agents reference `.bmad-core/` files as needed during execution.
+```
+[15:23] SM: Created story 1.3 -> Ready for Development
+[15:45] Dev: Implemented 1.3 -> Ready for Review
+[16:10] QA: Reviewed 1.3 -> In Progress (error handling incomplete)
+[16:35] Dev: Fixed 1.3 -> Ready for Review
+[16:50] QA: Re-reviewed 1.3 -> Done ✓
 
-## License
+[16:51] SM: Created story 1.4 -> Ready for Development
+[17:15] Dev: Implemented 1.4 -> Ready for Review
+[17:40] QA: Reviewed 1.4 -> Done ✓
 
-This repository provides orchestration patterns for autonomous AI-driven software development using the BMAD methodology.
+[17:41] SM: No more stories needed
+[17:41] 🎉 EPIC COMPLETE -> Interrupts you
+```
 
-## Getting Started
+---
 
-1. Choose your orchestrator (sequential or parallelized)
-2. Set up your project structure with required docs
-3. Copy agent configurations to your project
-4. Paste the orchestrator prompt into Claude Code
-5. Watch autonomous development cycle through your epics
-
-The orchestrator will take over from there, cycling through SM -> Dev -> QA until all work is complete.
+**TL;DR**: Paste an orchestrator prompt into Claude Code. It runs SM -> Dev -> QA cycles continuously until your entire epic is done. You get pinged when it's finished.
