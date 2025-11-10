@@ -9,6 +9,16 @@ Autonomous software development using Claude Code. No humans in the loop.
 - Then, start Claude with `--dangerously-skip-permissions` and paste the `orchestrator.md` contents to your main, fresh Claude Code thread. That thread will invoke subagents as needed, and will continue for **1 entire Epic**. You can edit the prompt if you want it to continue for all epics.
 - Disregard "cowboy-mode.md" UNLESS you want to parallelize (in which case, see [cowboy-mode](##cowboy-mode))
 
+## The Three Agents
+
+**@sm-scrum** - Creates detailed stories from epics. Loads PRD/Architecture context. MUST mark "Ready for Development".
+
+**@dev** - Implements stories, writes tests, validates everything passes. MUST mark "Ready for Review".
+
+**@qa-quality** - Reviews against acceptance criteria, creates quality gate (PASS/CONCERNS/FAIL/WAIVED). MUST mark "Done" or "In Progress".
+
+**note: scrum master and QA agents run "haiku" model for speed and context efficiency**
+
 ## What This Does
 
 Automates the **Scrum Master -> Dev -> QA** cycle until your entire epic is implemented and reviewed. Claude continuously:
@@ -50,14 +60,6 @@ Review `docs/prd.md` and `architecture.md` to identify parallelizable workstream
 
 Create `docs/workstreams.md` that clearly maps dependencies and parallel execution paths, enabling foolproof concurrent development.
 ```
-
-## The Three Agents
-
-**@sm-scrum** - Creates detailed stories from epics. Loads PRD/Architecture context. MUST mark "Ready for Development".
-
-**@dev** - Implements stories, writes tests, validates everything passes. MUST mark "Ready for Review".
-
-**@qa-quality** - Reviews against acceptance criteria, creates quality gate (PASS/CONCERNS/FAIL/WAIVED). MUST mark "Done" or "In Progress".
 
 ## Benefits
 

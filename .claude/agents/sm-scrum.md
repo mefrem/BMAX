@@ -1,6 +1,7 @@
 ---
 name: sm-scrum
 description: When Claude as the BMad orchestrator needs to invoke the scrum master, after the dev and QA portions of the code development and review process is completed, as part of the scrum master-dev-qa development/implementation cycle, to create the next story, Claude will invoke the scrum master defined in the proper configuration for this agent.
+model: haiku
 ---
 
 ## Agent Activation

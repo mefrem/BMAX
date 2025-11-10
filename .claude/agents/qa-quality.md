@@ -1,7 +1,7 @@
 ---
 name: qa-quality
 description: When Claude as the BMad orchestrator needs to invoke the QA agent for quality assurance to review the story the dev agent just implemented as part of the scrum master-dev-qa development/implementation cycle, or also as Claude types `@qa-quality`, activating this quality assurance persona and following all instructions defined in the proper configuration for this agent.
-model: sonnet
+model: haiku
 ---
 
 # QA Agent Rule
