@@ -1,13 +1,32 @@
-# BMAD Orchestrating
+# BMAX - Orchestrating BMAD
 
-Autonomous software development using Claude Code. No humans in the loop.
+Automating [BMAD!](https://github.com/bmad-code-org/BMAD-METHOD) BMAD is great. But what if we... automated it?
+
+Enter BMAX: automate the orchestration of your BMAD project's implementation phase. 
 
 ## QuickStart Checklist
 
-- Add these files to your project
-- Have Claude create a `project-overview.md` to provide concise context of your project to your orchestrator. Aim for a paragraph, keep it brief.
-- Then, start Claude with `--dangerously-skip-permissions` and paste the `orchestrator.md` contents to your main, fresh Claude Code thread. That thread will invoke subagents as needed, and will continue for **1 entire Epic**. You can edit the prompt if you want it to continue for all epics.
-- Disregard "cowboy-mode.md" UNLESS you want to parallelize (in which case, see [cowboy-mode](##cowboy-mode))
+- [ ] Clone this repo: `git clone https://github.com/mefrem/BMAX.git <project_name>
+  - Remove this repo from your git: `git remote remove origin`
+- [ ] Start Claude, create `/docs/prd.md` and `/docs/architecture.md` by invoking the `@analyst`, `@pm`, or `@architect` to elicit those docs. 
+  - See [quickstart visual](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/src/modules/bmm/docs/quick-start.md#the-complete-flow-visualized)
+- [ ] To orchestrate, start Claude with `--dangerously-skip-permissions` and paste the `orchestrator.md` contents to your main Claude Code chat.
+  - That chat will invoke subagents as needed, and will continue for **1 entire Epic** by default. You can edit the prompt if you want to implement for X stories, till 100% completion, etc.
+
+Disregard "cowboy-mode.md" UNLESS you want to parallelize (in which case, see [cowboy-mode](##cowboy-mode)) (warning, experimental)
+
+## What This Does
+
+Automates the **Scrum Master -> Dev -> QA** portion of the Implementation phase (i.e. the coding and review) until your entire epic of software is developed and reviewed. Claude continuously:
+
+1. Drafts stories (SM agent)
+2. Implements code (Dev agent)
+3. Reviews implementation (QA agent)
+4. Has dev fix issues if QA sources any and repeats until "Done"
+5. Moves to next story automatically
+6. Keeps a log in `orchestration-flow.md` of work, agent invocations, etc.
+
+**You only get interrupted when the entire epic is finished or there's a critical blocker.**
 
 ## The Three Agents
 
@@ -19,17 +38,6 @@ Autonomous software development using Claude Code. No humans in the loop.
 
 **note: scrum master and QA agents run "haiku" model for speed and context efficiency**
 
-## What This Does
-
-Automates the **Scrum Master -> Dev -> QA** cycle until your entire epic is implemented and reviewed. Claude continuously:
-
-1. Drafts stories (SM agent)
-2. Implements code (Dev agent)
-3. Reviews implementation (QA agent)
-4. Has dev fix issues if QA sources any and repeats until "Done"
-5. Moves to next story automatically
-
-**You only get interrupted when the entire epic is finished or there's a critical blocker.**
 
 ## What's Included
 
@@ -37,11 +45,11 @@ This repository contains:
 
 - **BMAD v4** - Complete framework in `.bmad-core/`
 - **Pre-configured agents** - SM, Dev, and QA agents ready to use in `.claude/agents/`
-- **Orchestrator prompts** - Orchestrator.md for sequential implementation, and cowboy-mode for parallelized workflow
+- **Orchestrator prompts** - Orchestrator.md for sequential orchestration of your implementation, and cowboy-mode for parallelized workflow
 
 ```
 orchestrator.md                   # Sequential: one epic, one story at a time
-cowboy-mode.md      # Parallel: multiple epics/stories simultaneously
+cowboy-mode.md                    # Parallel: multiple epics/stories simultaneously
 .claude/agents/                   # SM, Dev, QA agent configs (pre-loaded)
 .bmad-core/                       # Full BMAD v4 framework
 ```
