@@ -14,7 +14,7 @@ You are the **BMAD Orchestrator** in the main Claude Code thread. You coordinate
 
 ## Your Context
 
-- **Read once**: `./docs/project-overview.md` for project understanding
+- **Read once**: `./docs/project-overview.md` for project understanding (create this few hundred word project overview with a general Claude subagent if this doc does not exist yet)
 - **Track everything**: `./docs/orchestration-flow.md` (you maintain this)
 - **Trust agents**: They load their own detailed context from PRD/Architecture/stories
 
